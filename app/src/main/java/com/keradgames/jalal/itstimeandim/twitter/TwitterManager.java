@@ -1,5 +1,8 @@
 package com.keradgames.jalal.itstimeandim.twitter;
 
+import com.keradgames.jalal.itstimeandim.util.TweetComparator;
+
+import java.util.Collections;
 import java.util.List;
 
 import rx.Observable;
@@ -14,7 +17,7 @@ import twitter4j.conf.ConfigurationBuilder;
 public class TwitterManager {
 
     private static final String CONSUMER_KEY = "w3QYzGymQ5D0Um3ziQXAabxYe";
-    private static final String CONSUMER_SECRET = "Add your consumer secret here";
+    private static final String CONSUMER_SECRET = "VyzrkII2UHrt898luG2afDye3XlM3Zc5lvhGhq2Qf5iGg7OrlV";
 
 
     public static Observable<OAuth2Token> authenticateApplication(){
@@ -42,7 +45,8 @@ public class TwitterManager {
         twitter.setOAuth2Token(token);
 
         Query query = new Query();
-        query.query("\"It's 12:00 and I'm\"");
+        query.count(100);
+        query.query("#MayThe4thBeWithYou today and");
 
         return Observable.defer(() -> {
             try {
@@ -52,5 +56,10 @@ public class TwitterManager {
                 return null;
             }
         });
+    }
+
+    public static List<Status> sortByTweetCount(List<Status> tweets) {
+        Collections.sort(tweets, new TweetComparator());
+        return tweets;
     }
 }

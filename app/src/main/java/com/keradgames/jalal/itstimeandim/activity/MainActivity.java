@@ -5,10 +5,16 @@ import android.app.Activity;
 import android.os.Bundle;
 import android.widget.LinearLayout;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.keradgames.jalal.itstimeandim.R;
 import com.keradgames.jalal.itstimeandim.twitter.TwitterManager;
 
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
+import java.util.List;
+
+import rx.Subscriber;
 import rx.android.app.AppObservable;
 import rx.android.schedulers.AndroidSchedulers;
 import rx.schedulers.Schedulers;
@@ -30,11 +36,28 @@ public class MainActivity extends Activity {
                 .subscribeOn(Schedulers.io())
                 .flatMap(token -> TwitterManager.getTweets(token).subscribeOn(Schedulers.io())
                         .observeOn(AndroidSchedulers.mainThread()))
-                .subscribe(tweets -> {
-                    for (Status tweet : tweets) {
-                        TextView text = new TextView(this);
-                        text.setText(tweet.getText());
-                        container.addView(text);
+                .map(tweets -> TwitterManager.sortByTweetCount(tweets)) // TODO: Check if map is done in worker thread. Probably not.
+                .subscribe(new Subscriber<List<Status>>() {
+                    @Override
+                    public void onCompleted() {
+                    }
+
+                    @Override
+                    public void onError(Throwable e) {
+                        Toast.makeText(MainActivity.this, "Ooops! This is embarrassing: " +
+                                e.getMessage(), Toast.LENGTH_LONG).show();
+                    }
+
+                    @Override
+                    public void onNext(List<Status> tweets) {
+                        DateFormat format = new SimpleDateFormat("dd/MM/yyyy HH:mm");
+                        for (Status tweet : tweets) {
+                            TextView text = new TextView(MainActivity.this);
+                            int retweet = tweet.getRetweetCount();
+                            String date = format.format(tweet.getCreatedAt());
+                            text.setText("RT: " + retweet + " | Date: " + date +" | " + tweet.getText());
+                            container.addView(text);
+                        }
                     }
                 }));
     }
