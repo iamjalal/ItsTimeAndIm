@@ -3,63 +3,71 @@ package com.keradgames.jalal.itstimeandim.activity;
 
 import android.app.Activity;
 import android.os.Bundle;
+import android.view.ViewGroup;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
 import com.keradgames.jalal.itstimeandim.R;
-import com.keradgames.jalal.itstimeandim.twitter.TwitterManager;
+import com.keradgames.jalal.itstimeandim.viewmodel.OnViewModelDataReady;
+import com.keradgames.jalal.itstimeandim.viewmodel.TweetViewModel;
 
-import java.text.DateFormat;
-import java.text.SimpleDateFormat;
-import java.util.List;
-
-import rx.Subscriber;
-import rx.android.app.AppObservable;
-import rx.android.schedulers.AndroidSchedulers;
-import rx.schedulers.Schedulers;
 import rx.subscriptions.CompositeSubscription;
 import twitter4j.Status;
 
-public class MainActivity extends Activity {
+public class MainActivity extends Activity implements OnViewModelDataReady {
+
+    private static final String SAVED_TWEET = "tweet";
 
     private CompositeSubscription mCompositeSubscription = new CompositeSubscription();
+    private TweetViewModel mViewModel;
+
+    private ViewGroup mContainer;
+
+    private Status mTweet;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.main_activity);
 
-        final LinearLayout container = (LinearLayout)findViewById(R.id.container);
+        if(savedInstanceState != null) {
+            mTweet = (Status)savedInstanceState.getSerializable(SAVED_TWEET);
+        }
 
-        mCompositeSubscription.add(AppObservable.bindActivity(this, TwitterManager.authenticateApplication())
-                .subscribeOn(Schedulers.io())
-                .flatMap(token -> TwitterManager.getTweets(token).subscribeOn(Schedulers.io())
-                        .observeOn(AndroidSchedulers.mainThread()))
-                .map(tweets -> TwitterManager.sortByTweetCount(tweets)) // TODO: Check if map is done in worker thread. Probably not.
-                .subscribe(new Subscriber<List<Status>>() {
-                    @Override
-                    public void onCompleted() {
-                    }
+        mContainer = (LinearLayout)findViewById(R.id.container);
+        mViewModel = new TweetViewModel(this, mCompositeSubscription);
+    }
 
-                    @Override
-                    public void onError(Throwable e) {
-                        Toast.makeText(MainActivity.this, "Ooops! This is embarrassing: " +
-                                e.getMessage(), Toast.LENGTH_LONG).show();
-                    }
+    @Override
+    public void onResume() {
+        super.onResume();
 
-                    @Override
-                    public void onNext(List<Status> tweets) {
-                        DateFormat format = new SimpleDateFormat("dd/MM/yyyy HH:mm");
-                        for (Status tweet : tweets) {
-                            TextView text = new TextView(MainActivity.this);
-                            int retweet = tweet.getRetweetCount();
-                            String date = format.format(tweet.getCreatedAt());
-                            text.setText("RT: " + retweet + " | Date: " + date +" | " + tweet.getText());
-                            container.addView(text);
-                        }
-                    }
-                }));
+        if(mTweet == null) {
+            mViewModel.loadData();
+        }
+        else {
+            onComplete(mTweet);
+        }
+    }
+
+    @Override
+    public void onComplete(Status tweet) {
+        mTweet = tweet;
+        TextView text = new TextView(this);
+        text.setText(tweet.getText());
+        mContainer.addView(text);
+    }
+
+    @Override
+    public void onError(Throwable e) {
+        Toast.makeText(this, "Ooops! This is embarrassing: " + e.getMessage(), Toast.LENGTH_LONG).show();
+    }
+
+    @Override
+    public void onSaveInstanceState(Bundle outState) {
+        super.onSaveInstanceState(outState);
+        outState.putSerializable(SAVED_TWEET, mTweet);
     }
 
     @Override

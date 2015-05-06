@@ -1,3 +1,6 @@
 <resources>
     <string name="app_name">ItsTimeAndIm</string>
+    
+    <string name="timeFormat1">It\'s %1$s and</string>
+    <string name="timeFormat2">It is %1$s and</string>
 </resources>

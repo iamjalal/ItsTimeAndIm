@@ -1,5 +1,8 @@
 package com.keradgames.jalal.itstimeandim.twitter;
 
+import android.content.Context;
+
+import com.keradgames.jalal.itstimeandim.util.QueryBuilder;
 import com.keradgames.jalal.itstimeandim.util.TweetComparator;
 
 import java.util.Collections;
@@ -19,8 +22,17 @@ public class TwitterManager {
     private static final String CONSUMER_KEY = "w3QYzGymQ5D0Um3ziQXAabxYe";
     private static final String CONSUMER_SECRET = "VyzrkII2UHrt898luG2afDye3XlM3Zc5lvhGhq2Qf5iGg7OrlV";
 
+    private static Context mContext;
 
-    public static Observable<OAuth2Token> authenticateApplication(){
+    public TwitterManager(Context context) {
+        mContext = context;
+    }
+
+    public static TwitterManager getInstance(Context context) {
+        return new TwitterManager(context);
+    }
+
+    public Observable<OAuth2Token> authenticateApplication() {
         ConfigurationBuilder builder = new ConfigurationBuilder();
         builder.setApplicationOnlyAuthEnabled(true);
         Twitter twitter = new TwitterFactory(builder.build()).getInstance();
@@ -36,7 +48,7 @@ public class TwitterManager {
         });
     }
 
-    public static Observable<List<Status>> getTweets(OAuth2Token token) {
+    public Observable<List<Status>> getTweets(OAuth2Token token) {
 
         ConfigurationBuilder builder = new ConfigurationBuilder();
         builder.setApplicationOnlyAuthEnabled(true);
@@ -45,8 +57,8 @@ public class TwitterManager {
         twitter.setOAuth2Token(token);
 
         Query query = new Query();
-        query.count(100);
-        query.query("#MayThe4thBeWithYou today and");
+        query.setResultType(Query.ResultType.mixed);
+        query.query(QueryBuilder.getQuery(mContext));
 
         return Observable.defer(() -> {
             try {
@@ -58,7 +70,7 @@ public class TwitterManager {
         });
     }
 
-    public static List<Status> sortByTweetCount(List<Status> tweets) {
+    public List<Status> sortByTweetCount(List<Status> tweets) {
         Collections.sort(tweets, new TweetComparator());
         return tweets;
     }
