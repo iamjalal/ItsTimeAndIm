@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <plurals name="retweet_sufix">
+        <item quantity="zero">No Retweets</item>
+        <item quantity="one">%d Retweet</item>
+        <item quantity="other">%d Retweets</item>
+    </plurals>
+</resources>
