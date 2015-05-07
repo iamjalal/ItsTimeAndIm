@@ -2,12 +2,18 @@ package com.keradgames.jalal.itstimeandim.activity;
 
 
 import android.app.Activity;
+import android.content.BroadcastReceiver;
+import android.content.Context;
+import android.content.Intent;
+import android.content.IntentFilter;
 import android.os.Bundle;
+import android.view.View;
 import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 
 import com.keradgames.jalal.itstimeandim.R;
+import com.keradgames.jalal.itstimeandim.util.NetworkMonitor;
 import com.keradgames.jalal.itstimeandim.util.RoundedTransformation;
 import com.keradgames.jalal.itstimeandim.viewmodel.OnViewModelDataReady;
 import com.keradgames.jalal.itstimeandim.viewmodel.TweetViewModel;
@@ -20,14 +26,26 @@ import org.joda.time.format.DateTimeFormatter;
 import rx.subscriptions.CompositeSubscription;
 import twitter4j.Status;
 
-public class MainActivity extends Activity implements OnViewModelDataReady {
+public class MainActivity extends Activity implements OnViewModelDataReady, NetworkMonitor.OnConnectionChangeListener {
 
-    private static final String SAVED_TWEET = "tweet";
+    private static final String SAVED_VIEW_MODEL = "viewmodel";
 
     private CompositeSubscription mCompositeSubscription = new CompositeSubscription();
     private TweetViewModel mViewModel;
 
     private Status mTweet;
+    private RefreshReceiver mRefreshReceiver;
+    private NetworkMonitor mNetworkMonitor;
+
+    private class RefreshReceiver extends BroadcastReceiver {
+
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            if(mNetworkMonitor.isNetworkAvailable(context)) {
+                mViewModel.loadData();
+            }
+        }
+    }
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -35,26 +53,33 @@ public class MainActivity extends Activity implements OnViewModelDataReady {
         setContentView(R.layout.main_activity);
 
         if(savedInstanceState != null) {
-            mTweet = (Status)savedInstanceState.getSerializable(SAVED_TWEET);
+            mViewModel = savedInstanceState.getParcelable(SAVED_VIEW_MODEL);
         }
+        else {
+            mViewModel = new TweetViewModel();
+        }
+    }
 
-        mViewModel = new TweetViewModel(this, mCompositeSubscription);
+    @Override
+    public void onStart() {
+        super.onStart();
+        registerRefresh();
+        registerNetworkMonitor();
     }
 
     @Override
     public void onResume() {
         super.onResume();
-
-        if(mTweet == null) {
-            mViewModel.loadData();
-        }
-        else {
-            onComplete(mTweet);
-        }
+        mViewModel.resume(this, mCompositeSubscription);
     }
 
     @Override
     public void onComplete(Status tweet) {
+
+        if(tweet == null) {
+            return;
+        }
+
         mTweet = tweet;
 
         ImageView profilePic = (ImageView)findViewById(R.id.profile_pic);
@@ -93,14 +118,51 @@ public class MainActivity extends Activity implements OnViewModelDataReady {
     }
 
     @Override
-    public void onSaveInstanceState(Bundle outState) {
-        super.onSaveInstanceState(outState);
-        outState.putSerializable(SAVED_TWEET, mTweet);
+    public void hasConnected() {
+        findViewById(R.id.disconnected).setVisibility(View.GONE);
+        mViewModel.loadData();
+    }
+
+    @Override
+    public void hasDisconnected() {
+        findViewById(R.id.disconnected).setVisibility(View.VISIBLE);
+        mCompositeSubscription.unsubscribe();
+    }
+
+    @Override
+    public void onStop() {
+        super.onStop();
+        unregisterRefresh();
+        unregisterNetworkMonitor();
     }
 
     @Override
     protected void onDestroy() {
         super.onDestroy();
         mCompositeSubscription.unsubscribe();
+    }
+
+    public void onSaveInstanceState(Bundle outState) {
+        super.onSaveInstanceState(outState);
+        outState.putParcelable(SAVED_VIEW_MODEL, mViewModel);
+    }
+
+    private void registerNetworkMonitor() {
+        mNetworkMonitor = new NetworkMonitor(this);
+        mNetworkMonitor.setOnConnectionChangeListener(this);
+        registerReceiver(mNetworkMonitor, new IntentFilter("android.net.conn.CONNECTIVITY_CHANGE"));
+    }
+
+    private void unregisterNetworkMonitor() {
+        unregisterReceiver(mNetworkMonitor);
+    }
+
+    private void registerRefresh() {
+        mRefreshReceiver = new RefreshReceiver();
+        registerReceiver(mRefreshReceiver, new IntentFilter("android.intent.action.TIME_TICK"));
+    }
+
+    private void unregisterRefresh() {
+        unregisterReceiver(mRefreshReceiver);
     }
 }

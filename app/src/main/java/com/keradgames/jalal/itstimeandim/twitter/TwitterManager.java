@@ -70,7 +70,7 @@ public class TwitterManager {
         });
     }
 
-    public List<Status> sortByTweetCount(List<Status> tweets) {
+    public List<Status> sortTweets(List<Status> tweets) {
         Collections.sort(tweets, new TweetComparator());
         return tweets;
     }
