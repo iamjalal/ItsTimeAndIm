@@ -4,6 +4,7 @@ package com.keradgames.jalal.itstimeandim.viewmodel;
 import twitter4j.Status;
 
 public interface OnViewModelDataReady {
-    void onComplete(Status tweet);
-    void onError(Throwable e);
+    void onDataReady(Status tweet);
+    void onError();
+    void onNoData();
 }

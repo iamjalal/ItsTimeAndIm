@@ -1,6 +1,16 @@
 <resources>
     <string name="app_name">ItsTimeAndIm</string>
-    
     <string name="timeFormat1">It\'s %1$s and</string>
     <string name="timeFormat2">It is %1$s and</string>
+    <string name="no_connection">No connection</string>
+    
+    <string name="profile_name_no_tweet">Kerad Games</string>
+    <string name="twitter_name_no_tweet">KeradGames</string>
+    <string name="text_no_tweet">I\'m checking out Jalal\'s app! :D</string>
+    <string name="time_no_tweet">Just now</string>
+
+    <string name="profile_name_error">Jalal Souky</string>
+    <string name="twitter_name_error">callmesouky</string>
+    <string name="text_error">Oops... This is embarrassing! D:</string>
+    <string name="time_error">Never happened</string>
 </resources>

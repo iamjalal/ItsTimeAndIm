@@ -1,13 +1,18 @@
 <?xml version="1.0" encoding="utf-8"?>
-<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent">
 
-    <View
+    <TextView
         android:id="@+id/disconnected"
         android:layout_width="match_parent"
-        android:layout_height="32dp"
-        android:background="@android:color/holo_red_dark"
+        android:layout_height="wrap_content"
+        android:text="@string/no_connection"
+        android:layout_alignParentBottom="true"
+        android:textColor="@android:color/white"
+        android:padding="@dimen/innerPadding"
+        android:gravity="center"
+        android:background="@android:color/black"
         android:visibility="gone"/>
 
     <include
@@ -15,6 +20,7 @@
         android:id="@+id/tweet"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_gravity="center_vertical"
-        android:layout_margin="@dimen/padding"/>
-</FrameLayout>
+        android:layout_centerInParent="true"
+        android:layout_margin="@dimen/padding"
+        android:visibility="gone"/>
+</RelativeLayout>

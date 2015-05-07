@@ -6,14 +6,14 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.content.res.Resources;
 import android.os.Bundle;
 import android.view.View;
 import android.widget.ImageView;
 import android.widget.TextView;
-import android.widget.Toast;
 
 import com.keradgames.jalal.itstimeandim.R;
-import com.keradgames.jalal.itstimeandim.util.NetworkMonitor;
+import com.keradgames.jalal.itstimeandim.receiver.NetworkMonitor;
 import com.keradgames.jalal.itstimeandim.util.RoundedTransformation;
 import com.keradgames.jalal.itstimeandim.viewmodel.OnViewModelDataReady;
 import com.keradgames.jalal.itstimeandim.viewmodel.TweetViewModel;
@@ -23,21 +23,42 @@ import org.joda.time.DateTime;
 import org.joda.time.format.DateTimeFormat;
 import org.joda.time.format.DateTimeFormatter;
 
+import butterknife.ButterKnife;
+import butterknife.InjectView;
 import rx.subscriptions.CompositeSubscription;
 import twitter4j.Status;
 
-public class MainActivity extends Activity implements OnViewModelDataReady, NetworkMonitor.OnConnectionChangeListener {
-
-    private static final String SAVED_VIEW_MODEL = "viewmodel";
+public class MainActivity extends Activity implements OnViewModelDataReady,
+        NetworkMonitor.OnConnectionChangeListener {
 
     private CompositeSubscription mCompositeSubscription = new CompositeSubscription();
     private TweetViewModel mViewModel;
 
-    private Status mTweet;
-    private RefreshReceiver mRefreshReceiver;
+    private TickReceiver mTickReceiver;
     private NetworkMonitor mNetworkMonitor;
 
-    private class RefreshReceiver extends BroadcastReceiver {
+    @InjectView(R.id.tweet)
+    public View tweetContainer;
+
+    @InjectView(R.id.profile_pic)
+    public ImageView profilePic;
+
+    @InjectView(R.id.profile_name)
+    public TextView profileName;
+
+    @InjectView(R.id.twitter_name)
+    public TextView twitterName;
+
+    @InjectView(R.id.tweet_text)
+    public TextView tweetText;
+
+    @InjectView(R.id.tweet_time)
+    public TextView tweetTime;
+
+    @InjectView(R.id.retweet_count)
+    public TextView retweetCount;
+
+    private class TickReceiver extends BroadcastReceiver {
 
         @Override
         public void onReceive(Context context, Intent intent) {
@@ -51,19 +72,15 @@ public class MainActivity extends Activity implements OnViewModelDataReady, Netw
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.main_activity);
+        ButterKnife.inject(this);
 
-        if(savedInstanceState != null) {
-            mViewModel = savedInstanceState.getParcelable(SAVED_VIEW_MODEL);
-        }
-        else {
-            mViewModel = new TweetViewModel();
-        }
+        mViewModel = new TweetViewModel();
     }
 
     @Override
     public void onStart() {
         super.onStart();
-        registerRefresh();
+        registerTimeTick();
         registerNetworkMonitor();
     }
 
@@ -74,31 +91,63 @@ public class MainActivity extends Activity implements OnViewModelDataReady, Netw
     }
 
     @Override
-    public void onComplete(Status tweet) {
+    public void onDataReady(Status tweet) {
 
         if(tweet == null) {
             return;
         }
 
-        mTweet = tweet;
+        loadImage(profilePic, tweet.getUser().getOriginalProfileImageURL());
 
-        ImageView profilePic = (ImageView)findViewById(R.id.profile_pic);
-        loadImage(profilePic);
+        profileName.setText(tweet.getUser().getName());
+        twitterName.setText("@" + tweet.getUser().getScreenName());
+        tweetText.setText(tweet.getText());
+        tweetTime.setText(getTweetTime(tweet.getCreatedAt().getTime()));
+        retweetCount.setText(getRetweetText(tweet.getRetweetCount()));
 
-        ((TextView)findViewById(R.id.profile_name)).setText(mTweet.getUser().getName());
-        ((TextView)findViewById(R.id.twitter_name)).setText("@" + mTweet.getUser().getScreenName());
-        ((TextView)findViewById(R.id.tweet_text)).setText(mTweet.getText());
-        ((TextView)findViewById(R.id.tweet_time)).setText(getTweetTime(mTweet.getCreatedAt().getTime()));
-        ((TextView)findViewById(R.id.retweet_count)).setText(getRetweetText(mTweet.getRetweetCount()));
+        tweetContainer.setVisibility(View.VISIBLE);
     }
 
-    private void loadImage(ImageView view) {
+    @Override
+    public void onError() {
+
+        loadImage(profilePic, R.drawable.profile_pic);
+
+        Resources res = getResources();
+        profileName.setText(res.getText(R.string.profile_name_error));
+        twitterName.setText("@" + res.getText(R.string.twitter_name_error));
+        tweetText.setText(res.getText(R.string.text_error));
+        tweetTime.setText(res.getText(R.string.time_error));
+        retweetCount.setText(getRetweetText(0));
+
+        tweetContainer.setVisibility(View.VISIBLE);
+    }
+
+    @Override
+    public void onNoData() {
+
+        loadImage(profilePic, R.drawable.kerad_profile);
+
+        Resources res = getResources();
+        profileName.setText(res.getText(R.string.profile_name_no_tweet));
+        twitterName.setText("@" + res.getText(R.string.twitter_name_no_tweet));
+        tweetText.setText(res.getText(R.string.text_no_tweet));
+        tweetTime.setText(res.getText(R.string.time_no_tweet));
+        retweetCount.setText(getRetweetText(23));
+
+        tweetContainer.setVisibility(View.VISIBLE);
+    }
+
+    private void loadImage(ImageView view, String url) {
         int size = getResources().getDimensionPixelSize(R.dimen.imageSize);
-        Picasso.with(this).load(mTweet.getUser().getOriginalProfileImageURL())
-                .transform(new RoundedTransformation(10,0))
-                .resize(size, size)
-                .placeholder(R.drawable.image_placeholder)
-                .into(view);
+        Picasso.with(this).load(url).transform(new RoundedTransformation(10,0))
+                .resize(size, size).placeholder(R.drawable.image_placeholder).into(view);
+    }
+
+    private void loadImage(ImageView view, int id) {
+        int size = getResources().getDimensionPixelSize(R.dimen.imageSize);
+        Picasso.with(this).load(id).transform(new RoundedTransformation(10,0))
+                .resize(size, size).placeholder(R.drawable.image_placeholder).into(view);
     }
 
     private String getTweetTime(long tweetMillis) {
@@ -113,11 +162,6 @@ public class MainActivity extends Activity implements OnViewModelDataReady, Netw
     }
 
     @Override
-    public void onError(Throwable e) {
-        Toast.makeText(this, "Ooops! This is embarrassing: " + e.getMessage(), Toast.LENGTH_LONG).show();
-    }
-
-    @Override
     public void hasConnected() {
         findViewById(R.id.disconnected).setVisibility(View.GONE);
         mViewModel.loadData();
@@ -126,13 +170,13 @@ public class MainActivity extends Activity implements OnViewModelDataReady, Netw
     @Override
     public void hasDisconnected() {
         findViewById(R.id.disconnected).setVisibility(View.VISIBLE);
-        mCompositeSubscription.unsubscribe();
+        mCompositeSubscription.clear();
     }
 
     @Override
     public void onStop() {
         super.onStop();
-        unregisterRefresh();
+        unregisterTimeTick();
         unregisterNetworkMonitor();
     }
 
@@ -140,11 +184,6 @@ public class MainActivity extends Activity implements OnViewModelDataReady, Netw
     protected void onDestroy() {
         super.onDestroy();
         mCompositeSubscription.unsubscribe();
-    }
-
-    public void onSaveInstanceState(Bundle outState) {
-        super.onSaveInstanceState(outState);
-        outState.putParcelable(SAVED_VIEW_MODEL, mViewModel);
     }
 
     private void registerNetworkMonitor() {
@@ -157,12 +196,12 @@ public class MainActivity extends Activity implements OnViewModelDataReady, Netw
         unregisterReceiver(mNetworkMonitor);
     }
 
-    private void registerRefresh() {
-        mRefreshReceiver = new RefreshReceiver();
-        registerReceiver(mRefreshReceiver, new IntentFilter("android.intent.action.TIME_TICK"));
+    private void registerTimeTick() {
+        mTickReceiver = new TickReceiver();
+        registerReceiver(mTickReceiver, new IntentFilter("android.intent.action.TIME_TICK"));
     }
 
-    private void unregisterRefresh() {
-        unregisterReceiver(mRefreshReceiver);
+    private void unregisterTimeTick() {
+        unregisterReceiver(mTickReceiver);
     }
 }

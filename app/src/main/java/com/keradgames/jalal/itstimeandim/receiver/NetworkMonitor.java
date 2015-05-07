@@ -1,4 +1,4 @@
-package com.keradgames.jalal.itstimeandim.util;
+package com.keradgames.jalal.itstimeandim.receiver;
 
 
 import android.content.BroadcastReceiver;

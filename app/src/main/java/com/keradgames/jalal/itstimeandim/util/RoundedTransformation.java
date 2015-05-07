@@ -13,7 +13,7 @@ import android.graphics.Shader;
  * Aug 12, 2013
  * https://gist.github.com/aprock/6213395
  *
- * Modifications suggested by Jake Wharton (Who else?)
+ * Modifications as suggested by Jake Wharton (Who else?)
  * Jul 8, 2014
  */
 public class RoundedTransformation implements com.squareup.picasso.Transformation {
