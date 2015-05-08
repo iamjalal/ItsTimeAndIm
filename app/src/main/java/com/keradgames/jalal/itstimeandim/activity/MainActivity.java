@@ -74,7 +74,7 @@ public class MainActivity extends Activity implements OnViewModelDataReady,
         setContentView(R.layout.main_activity);
         ButterKnife.inject(this);
 
-        mViewModel = new TweetViewModel();
+        mViewModel = new TweetViewModel(this, mCompositeSubscription);
     }
 
     @Override
@@ -87,7 +87,7 @@ public class MainActivity extends Activity implements OnViewModelDataReady,
     @Override
     public void onResume() {
         super.onResume();
-        mViewModel.resume(this, mCompositeSubscription);
+        mViewModel.loadData();
     }
 
     @Override

@@ -24,7 +24,7 @@ public class TweetViewModel {
     private CacheManager mCacheManager;
     private Context mContext;
 
-    public void resume(MainActivity activity, CompositeSubscription subscriptions) {
+    public TweetViewModel(MainActivity activity, CompositeSubscription subscriptions) {
         mContext = activity;
         mCacheManager = CacheManager.getInstance(activity);
         mSubscriptions = subscriptions;
@@ -34,8 +34,6 @@ public class TweetViewModel {
         if(preloadTweet != null) {
             mCallback.onDataReady(preloadTweet);
         }
-
-        loadData();
     }
 
     public void loadData() {

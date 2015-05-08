@@ -19,16 +19,19 @@ android {
         }
     }
 
+    //Please make sure you have a JAVA 8 environment variable
     compileOptions {
         sourceCompatibility JavaVersion.VERSION_1_8
         targetCompatibility JavaVersion.VERSION_1_8
     }
 
-    retrolambda {
+    // Only needed for OSX. Please verify that the JDK locations
+    // match the distributions in your machine
+    /*retrolambda {
         jdk "/Library/Java/JavaVirtualMachines/jdk1.8.0_45.jdk/Contents/Home"
         oldJdk "/System/Library/Frameworks/JavaVM.framework/1.6/Current/Home"
         javaVersion JavaVersion.VERSION_1_6
-    }
+    }*/
 
     packagingOptions {
         exclude 'META-INF/LICENSE.txt'
