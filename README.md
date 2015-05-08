@@ -1,12 +1,5 @@
 # ItsTimeAndIm
 
-## README
-
-This application has been developed by Jalal Souky as a request from Kerad Games.
-
-http://www.keradgames.com/
-
-Make sure to check their amazing football manager game
 
 **Description**
 
@@ -20,6 +13,30 @@ It's not necessary that the tweet was published at that specific date, only the 
 
 Additionally the application automatically fetches a new tweet every minute.
 
+**Libraries used**
+
+* Twitter4J: http://twitter4j.org/en/index.html
+* RxAndroid: https://github.com/ReactiveX/RxAndroid
+* Joda-Time: http://www.joda.org/joda-time/
+* Picasso: http://square.github.io/picasso/
+* Butterknife: http://jakewharton.github.io/butterknife/
+
+
 **Important**
 
 Make sure to change the twitter consumer token/secret for the search API.
+
+**Disclaimer**
+
+This application has been developed by Jalal Souky as a request from Kerad Games.
+
+http://www.keradgames.com/
+
+Make sure to check their amazing football manager game
+
+**Contact**
+
+- Twitter: @callmesouky
+- Email: jalalsouky@gmail.com
+- Linkedin: https://www.linkedin.com/profile/view?id=145115290
+
